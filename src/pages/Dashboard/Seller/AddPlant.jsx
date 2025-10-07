@@ -1,7 +1,61 @@
-import { Helmet } from 'react-helmet-async'
-import AddPlantForm from '../../../components/Form/AddPlantForm'
+import { Helmet } from "react-helmet-async";
+import AddPlantForm from "../../../components/Form/AddPlantForm";
+import useAuth from "../../../hooks/useAuth";
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import { useState } from "react";
+import { imageUpload } from "../../../api/utils";
+import toast from "react-hot-toast";
 
 const AddPlant = () => {
+  const { user } = useAuth();
+  const axiosSecure = useAxiosSecure();
+  const [uploadImage, setUploadImage] = useState({
+    image: { name: "Upload Image" },
+  });
+  console.log(uploadImage);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const form = e.target;
+    const name = form.name.value;
+    const description = form.description.value;
+    const category = form.category.value;
+    const price = parseFloat(form.price.value);
+    const quantity = parseInt(form.quantity.value);
+    const image = form.image.files[0];
+    const imageUrl = await imageUpload(image);
+
+    // seller info
+    const seller = {
+      name: user?.displayName,
+      image: user?.photoURL,
+      email: user?.email,
+    };
+
+    // create plant data object
+    const plantData = {
+      name,
+      description,
+      category,
+      price,
+      quantity,
+      image: imageUrl,
+      seller,
+    };
+    console.table(plantData);
+    // save plant data in db
+    try {
+      await axiosSecure.post("/plants", plantData);
+      toast.success("Data added successfully.");
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <Helmet>
@@ -9,9 +63,9 @@ const AddPlant = () => {
       </Helmet>
 
       {/* Form */}
-      <AddPlantForm />
+      <AddPlantForm handleSubmit={handleSubmit} />
     </div>
-  )
-}
+  );
+};
 
-export default AddPlant
+export default AddPlant;
