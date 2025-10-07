@@ -63,7 +63,12 @@ const AddPlant = () => {
       </Helmet>
 
       {/* Form */}
-      <AddPlantForm handleSubmit={handleSubmit} />
+      <AddPlantForm
+        handleSubmit={handleSubmit}
+        uploadImage={uploadImage}
+        setUploadImage={setUploadImage}
+        loading={loading}
+      />
     </div>
   );
 };
