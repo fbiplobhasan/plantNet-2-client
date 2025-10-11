@@ -11,8 +11,11 @@ import useAuth from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
 import toast from "react-hot-toast";
-import Button from "../Shared/Button/Button";
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from "../Form/CheckoutForm";
+import { loadStripe } from "@stripe/stripe-js";
 
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const PurchaseModal = ({ closeModal, isOpen, plant, refetch }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -48,25 +51,6 @@ const PurchaseModal = ({ closeModal, isOpen, plant, refetch }) => {
     setPurchaseInfo((prv) => {
       return { ...prv, quantity: value, price: value * price };
     });
-  };
-  const handlePurchase = async () => {
-    console.table(purchaseInfo);
-    // post request to db
-    try {
-      await axiosSecure.post("/order", purchaseInfo);
-      // decrease quantiry from plant collection
-      await axiosSecure.patch(`/plants/quantity/${_id}`, {
-        quantityToUpdate: totalQuantity,
-        status: "decrease",
-      });
-      toast.success("Order Successful!");
-      refetch();
-      navigate("/dashboard/my-orders");
-    } catch (error) {
-      console.log(error);
-    } finally {
-      closeModal();
-    }
   };
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -156,12 +140,16 @@ const PurchaseModal = ({ closeModal, isOpen, plant, refetch }) => {
                     required
                   />
                 </div>
-                <div className="mt-3">
-                  <Button
-                    onClick={handlePurchase}
-                    label={`Pay ${totalPrice}$`}
+                {/* CheckoutForm */}
+                <Elements stripe={stripePromise}>
+                  {/* Form component */}
+                  <CheckoutForm
+                    closeModal={closeModal}
+                    purchaseInfo={purchaseInfo}
+                    refetch={refetch}
+                    totalQuantity={totalQuantity}
                   />
-                </div>
+                </Elements>
               </DialogPanel>
             </TransitionChild>
           </div>
